@@ -125,8 +125,10 @@ class _NotificationsSheetState extends State<NotificationsSheet> {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         children: [
           // Drag handle indicator
           const SizedBox(height: 12),
@@ -354,6 +356,7 @@ class _NotificationsSheetState extends State<NotificationsSheet> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

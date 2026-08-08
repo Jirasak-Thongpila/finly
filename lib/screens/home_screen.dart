@@ -193,17 +193,15 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onLogout: () => session.logout(),
       ),
-      body: SafeArea(
-        child: IndexedStack(
-          index: _activeNavIndex,
-          children: [
-            _buildHomeBody(user),
-            StatisticsScreen(onMenuTap: _openDrawer),
-            const SizedBox.shrink(),
-            TransactionsScreen(onMenuTap: _openDrawer),
-            SettingsScreen(onMenuTap: _openDrawer),
-          ],
-        ),
+      body: IndexedStack(
+        index: _activeNavIndex,
+        children: [
+          SafeArea(bottom: false, child: _buildHomeBody(user)),
+          StatisticsScreen(onMenuTap: _openDrawer),
+          const SizedBox.shrink(),
+          TransactionsScreen(onMenuTap: _openDrawer),
+          SettingsScreen(onMenuTap: _openDrawer),
+        ],
       ),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: _activeNavIndex,
@@ -722,7 +720,6 @@ class _BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -734,58 +731,64 @@ class _BottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            label: 'หน้าหลัก',
-            selected: selectedIndex == 0,
-            onTap: () => onItemTapped(0),
-          ),
-          _NavItem(
-            icon: Icons.bar_chart_rounded,
-            label: 'สถิติ',
-            selected: selectedIndex == 1,
-            onTap: () => onItemTapped(1),
-          ),
-          // ปุ่มตรงกลางสีเขียวสว่างสำหรับเพิ่มรายการ
-          GestureDetector(
-            onTap: () => onItemTapped(2),
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.limeAccent,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.limeAccent.withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home_rounded,
+                label: 'หน้าหลัก',
+                selected: selectedIndex == 0,
+                onTap: () => onItemTapped(0),
+              ),
+              _NavItem(
+                icon: Icons.bar_chart_rounded,
+                label: 'สถิติ',
+                selected: selectedIndex == 1,
+                onTap: () => onItemTapped(1),
+              ),
+              // ปุ่มตรงกลางสีเขียวสว่างสำหรับเพิ่มรายการ
+              GestureDetector(
+                onTap: () => onItemTapped(2),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.limeAccent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.limeAccent.withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.textPrimary,
+                    size: 28,
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: AppColors.textPrimary,
-                size: 28,
+              _NavItem(
+                icon: Icons.receipt_long_rounded,
+                label: 'รายการ',
+                selected: selectedIndex == 3,
+                onTap: () => onItemTapped(3),
               ),
-            ),
+              _NavItem(
+                icon: Icons.person_outline_rounded,
+                label: 'โปรไฟล์',
+                selected: selectedIndex == 4,
+                onTap: () => onItemTapped(4),
+              ),
+            ],
           ),
-          _NavItem(
-            icon: Icons.receipt_long_rounded,
-            label: 'รายการ',
-            selected: selectedIndex == 3,
-            onTap: () => onItemTapped(3),
-          ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            label: 'โปรไฟล์',
-            selected: selectedIndex == 4,
-            onTap: () => onItemTapped(4),
-          ),
-        ],
+        ),
       ),
     );
   }
