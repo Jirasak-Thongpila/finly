@@ -32,9 +32,15 @@ class AppColors {
   static const Color expense = Color(0xFFEA580C);
   static const Color expenseRed = Color(0xFFDC2626);
 
-  static const Color background = Color(0xFFF4F6F8);
+  // Modern Fintech UI Accent Colors
+  static const Color limeAccent = Color(0xFFC6F432); // Vibrant lime green from reference image
+  static const Color limeAccentDark = Color(0xFF9ECE0A);
+  static const Color purpleBadgeBg = Color(0xFFEDE9FE);
+  static const Color purpleBadgeText = Color(0xFF7C3AED);
+
+  static const Color background = Color(0xFFF7F9FA);
   static const Color card = Colors.white;
-  static const Color textPrimary = Color(0xFF16251C);
+  static const Color textPrimary = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color divider = Color(0xFFE5E7EB);
 
