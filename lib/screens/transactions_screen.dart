@@ -6,22 +6,30 @@ import '../services/api_client.dart';
 import '../services/session_manager.dart';
 import '../services/transaction_service.dart';
 import '../utils/constants.dart';
+import '../utils/formatters.dart';
+import '../widgets/skeleton_loaders.dart';
 import '../widgets/state_views.dart';
 import '../widgets/transaction_card.dart';
 import 'add_expense_screen.dart';
 import 'add_income_screen.dart';
 
-/// Full transaction list with income/expense filter, edit (tap) and
-/// delete (swipe / confirm dialog). Refreshes from the API after changes.
+/// หน้าประวัติรายการธุรกรรม (TransactionsScreen) ดีไซน์ใหม่:
+/// - แถบเลือกตัวกรอง 3 สถานะ (ทั้งหมด, รายรับ, รายจ่าย) แบบ Pill Segment
+/// - ช่องค้นหาค้นจากชื่อรายการ/หมวดหมู่
+/// - จัดกลุ่มรายการแบ่งตามวัน (วันนี้, เมื่อวาน, วันที่ประทับเวลา)
+/// - สไลด์เพื่อลบการ์ด + ปุ่มเพิ่มรายการใหม่ (+) ด้านล่างขวา
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+  final VoidCallback? onMenuTap;
+
+  const TransactionsScreen({super.key, this.onMenuTap});
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
-  String? _typeFilter; // null = all, 'income' | 'expense'
+  String? _typeFilter; // null = ทั้งหมด, 'income' = รายรับ, 'expense' = รายจ่าย
+  String _searchQuery = '';
   TransactionPage? _page;
   bool _loading = true;
   String? _error;
@@ -62,7 +70,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unexpected error. Please try again.';
+        _error = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
         _loading = false;
       });
     }
@@ -76,7 +84,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Transaction deleted'),
+          content: Text('ลบรายการเรียบร้อยแล้ว'),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -100,69 +108,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Transactions')),
-      body: Column(
-        children: [
-          _FilterBar(
-            selected: _typeFilter,
-            onChanged: (type) {
-              setState(() => _typeFilter = type);
-              _load();
-            },
-          ),
-          Expanded(child: _buildBody()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_loading && _page == null) {
-      return const LoadingView(message: 'Loading transactions…');
-    }
-    if (_error != null && _page == null) {
-      return ErrorView(message: _error!, onRetry: _load);
-    }
-
-    final transactions = _page?.transactions ?? const <Transaction>[];
-    if (transactions.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 120),
-            EmptyView(
-              icon: Icons.receipt_long_outlined,
-              title: 'No transactions yet',
-              subtitle:
-                  _typeFilter == null
-                      ? 'Add transactions from the home screen.'
-                      : 'No $_typeFilter transactions found.',
-              actionLabel: 'Add Income or Expense',
-              onAction: () => _showAddSheet(),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: DismissibleList(
-        children: [...transactions],
-        onDelete: _delete,
-        onEdit: _edit,
-        loading: _loading,
-      ),
-    );
-  }
-
   void _showAddSheet() {
-    final context = this.context;
     showModalBottomSheet<void>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -173,7 +119,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Add Transaction',
+                'เพิ่มรายการ',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -183,23 +129,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _Option(
+              _AddOption(
                 icon: Icons.add_circle_outline,
-                label: 'Add Income',
+                label: 'บันทึกรายรับ',
                 color: AppColors.income,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  _editLike('income');
+                  _openAddScreen('income');
                 },
               ),
               const SizedBox(height: 10),
-              _Option(
+              _AddOption(
                 icon: Icons.remove_circle_outline,
-                label: 'Add Expense',
+                label: 'บันทึกรายจ่าย',
                 color: AppColors.expense,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  _editLike('expense');
+                  _openAddScreen('expense');
                 },
               ),
             ],
@@ -209,7 +155,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  void _editLike(String type) {
+  void _openAddScreen(String type) {
     final screen =
         type == 'income' ? const AddIncomeScreen() : const AddExpenseScreen();
     Navigator.of(context)
@@ -218,80 +164,267 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (changed == true && mounted) _load();
     });
   }
-}
 
-/// Dismissible list wrapper to keep delete/refresh handling near the data.
-class DismissibleList extends StatelessWidget {
-  final List<Transaction> children;
-  final Future<void> Function(Transaction) onDelete;
-  final void Function(Transaction) onEdit;
-  final bool loading;
-
-  const DismissibleList({
-    super.key,
-    required this.children,
-    required this.onDelete,
-    required this.onEdit,
-    required this.loading,
-  });
+  List<Transaction> _filterTransactions(List<Transaction> rawList) {
+    if (_searchQuery.trim().isEmpty) return rawList;
+    final query = _searchQuery.trim().toLowerCase();
+    return rawList.where((t) {
+      final desc = t.description.toLowerCase();
+      final cat = t.category.toLowerCase();
+      return desc.contains(query) || cat.contains(query);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-          AppConstants.pagePadding, 8, AppConstants.pagePadding, 24),
-      itemCount: children.length + (loading ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= children.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
-          );
-        }
-        final t = children[index];
-        return Dismissible(
-          key: ValueKey(t.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: AppColors.expenseRed,
-              borderRadius: BorderRadius.circular(AppConstants.radiusM),
-            ),
-            child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.subject_rounded, color: AppColors.textPrimary),
+          tooltip: 'เปิดเมนู',
+          onPressed: widget.onMenuTap ?? () => Scaffold.of(context).openDrawer(),
+        ),
+        title: const Text(
+          'ประวัติรายการธุรกรรม',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Inter',
           ),
-          confirmDismiss: (_) => _confirmDelete(context, t),
-          onDismissed: (_) => onDelete(t),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: TransactionCard(transaction: t, onTap: () => onEdit(t)),
+        ),
+        centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddSheet,
+        backgroundColor: AppColors.limeAccent,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 3,
+        child: const Icon(Icons.add_rounded, size: 28),
+      ),
+      body: Column(
+        children: [
+          // 1. แถบเลือกประเภทตัวกรอง (ทั้งหมด / รายรับ / รายจ่าย)
+          _SegmentFilterBar(
+            selected: _typeFilter,
+            onChanged: (type) {
+              setState(() => _typeFilter = type);
+              _load();
+            },
           ),
-        );
-      },
+
+          // 2. ช่องค้นหาจากชื่อรายการ/หมวดหมู่
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.pagePadding,
+              vertical: 4,
+            ),
+            child: TextField(
+              onChanged: (val) => setState(() => _searchQuery = val),
+              decoration: InputDecoration(
+                hintText: 'ค้นหาจากชื่อรายการ หรือหมวดหมู่…',
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        onPressed: () => setState(() => _searchQuery = ''),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                fillColor: Colors.white,
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: AppColors.divider.withValues(alpha: 0.6)),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // 3. รายการธุรกรรมแบ่งกลุ่มตามวันที่
+          Expanded(child: _buildBody()),
+        ],
+      ),
     );
   }
 
+  Widget _buildBody() {
+    if (_loading && _page == null) {
+      return const TransactionsSkeletonView();
+    }
+    if (_error != null && _page == null) {
+      return ErrorView(message: _error!, onRetry: _load);
+    }
+
+    final rawTransactions = _page?.transactions ?? const <Transaction>[];
+    final filtered = _filterTransactions(rawTransactions);
+
+    if (filtered.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 80),
+            EmptyView(
+              icon: Icons.receipt_long_outlined,
+              title: 'ยังไม่มีรายการธุรกรรม',
+              subtitle: _searchQuery.isNotEmpty
+                  ? 'ไม่พบรายการที่ค้นหา "$_searchQuery"'
+                  : _typeFilter == null
+                      ? 'คุณสามารถเพิ่มรายการรายรับหรือรายจ่ายใหม่ได้ทันที'
+                      : 'ไม่พบรายการในหมวด $_typeFilter',
+              actionLabel: 'เพิ่มรายการ',
+              onAction: _showAddSheet,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // จัดกลุ่มตามวันที่
+    final grouped = _groupTransactions(filtered);
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.primary,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppConstants.pagePadding, 4, AppConstants.pagePadding, 80,
+        ),
+        itemCount: grouped.length,
+        itemBuilder: (context, dateIndex) {
+          final dateKey = grouped.keys.elementAt(dateIndex);
+          final items = grouped[dateKey]!;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // หัวข้อวันที่
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
+                child: Text(
+                  _formatDateHeader(dateKey),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+
+              // การ์ดรายการในวันนั้นๆ
+              ...items.map((t) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Dismissible(
+                      key: ValueKey(t.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'ลบรายการ',
+                              style: TextStyle(
+                                color: AppColors.expenseRed,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.delete_outline_rounded, color: AppColors.expenseRed),
+                          ],
+                        ),
+                      ),
+                      confirmDismiss: (_) => _confirmDelete(context, t),
+                      onDismissed: (_) => _delete(t),
+                      child: TransactionCard(
+                        transaction: t,
+                        onTap: () => _edit(t),
+                      ),
+                    ),
+                  )),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Map<String, List<Transaction>> _groupTransactions(List<Transaction> list) {
+    final Map<String, List<Transaction>> groups = {};
+    for (final t in list) {
+      final key = t.date;
+      groups.putIfAbsent(key, () => []).add(t);
+    }
+    return groups;
+  }
+
+  String _formatDateHeader(String dateStr) {
+    try {
+      final now = DateTime.now();
+      final todayStr = Formatters.apiDate(now);
+      final yesterdayStr = Formatters.apiDate(now.subtract(const Duration(days: 1)));
+
+      if (dateStr == todayStr) return 'วันนี้';
+      if (dateStr == yesterdayStr) return 'เมื่อวาน';
+
+      final dt = DateTime.parse(dateStr);
+      const thaiMonths = [
+        'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+        'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+      ];
+      return '${dt.day} ${thaiMonths[dt.month - 1]} ${dt.year}';
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
   Future<bool> _confirmDelete(BuildContext context, Transaction t) async {
+    final title = t.description.isNotEmpty ? t.description : t.category;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete transaction?'),
-        content: Text(
-            'This will permanently remove "${t.description.isNotEmpty ? t.description : t.category}".'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'ยืนยันการลบรายการ?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text('คุณต้องการลบรายการ "$title" ใช่หรือไม่?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('ยกเลิก'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.expenseRed),
-            child: const Text('Delete'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.expenseRed,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(88, 40),
+            ),
+            child: const Text('ลบรายการ'),
           ),
         ],
       ),
@@ -300,38 +433,54 @@ class DismissibleList extends StatelessWidget {
   }
 }
 
-class _FilterBar extends StatelessWidget {
+// ============================================================================
+// SEGMENT FILTER BAR: ตัวกรองแบบ Pill Segment (ทั้งหมด / รายรับ / รายจ่าย)
+// ============================================================================
+class _SegmentFilterBar extends StatelessWidget {
   final String? selected;
   final ValueChanged<String?> onChanged;
 
-  const _FilterBar({required this.selected, required this.onChanged});
+  const _SegmentFilterBar({
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppConstants.pagePadding, 4, AppConstants.pagePadding, 8),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        AppConstants.pagePadding, 8, AppConstants.pagePadding, 8,
+      ),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.6)),
+      ),
       child: Row(
         children: [
-          _FilterChip(
-            label: 'All',
-            selected: selected == null,
-            onTap: () => onChanged(null),
-            color: AppColors.primary,
+          Expanded(
+            child: _SegmentItem(
+              label: 'ทั้งหมด',
+              isSelected: selected == null,
+              onTap: () => onChanged(null),
+            ),
           ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Income',
-            selected: selected == 'income',
-            onTap: () => onChanged('income'),
-            color: AppColors.income,
+          Expanded(
+            child: _SegmentItem(
+              label: 'รายรับ (+)',
+              isSelected: selected == 'income',
+              activeColor: AppColors.income,
+              onTap: () => onChanged('income'),
+            ),
           ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Expense',
-            selected: selected == 'expense',
-            onTap: () => onChanged('expense'),
-            color: AppColors.expense,
+          Expanded(
+            child: _SegmentItem(
+              label: 'รายจ่าย (-)',
+              isSelected: selected == 'expense',
+              activeColor: AppColors.expenseRed,
+              onTap: () => onChanged('expense'),
+            ),
           ),
         ],
       ),
@@ -339,47 +488,52 @@ class _FilterBar extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
+class _SegmentItem extends StatelessWidget {
   final String label;
-  final bool selected;
+  final bool isSelected;
+  final Color activeColor;
   final VoidCallback onTap;
-  final Color color;
 
-  const _FilterChip({
+  const _SegmentItem({
     required this.label,
-    required this.selected,
+    required this.isSelected,
+    this.activeColor = AppColors.textPrimary,
     required this.onTap,
-    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      selectedColor: color,
-      backgroundColor: AppColors.card,
-      labelStyle: TextStyle(
-        color: selected ? Colors.white : AppColors.textSecondary,
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: selected ? color : AppColors.divider),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? (activeColor == AppColors.textPrimary ? AppColors.limeAccent : activeColor.withValues(alpha: 0.12)) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? (activeColor == AppColors.textPrimary ? AppColors.textPrimary : activeColor) : AppColors.textSecondary,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontFamily: 'Inter',
+          ),
+        ),
       ),
     );
   }
 }
 
-class _Option extends StatelessWidget {
+class _AddOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _Option({
+  const _AddOption({
     required this.icon,
     required this.label,
     required this.color,
@@ -406,6 +560,7 @@ class _Option extends StatelessWidget {
                   color: AppColors.textPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
                 ),
               ),
             ],

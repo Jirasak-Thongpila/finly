@@ -18,18 +18,22 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPositive = balance >= 0;
+    final balanceColor = isPositive ? const Color(0xFFDCFCE7) : const Color(0xFFFCA5A5);
+    final balancePrefix = isPositive ? '+' : '-';
+
     return Container(
       padding: const EdgeInsets.all(AppConstants.pagePadding),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [Color(0xFF16251C), Color(0xFF0F172A)], // Deep Charcoal Navy Gradient
         ),
         borderRadius: BorderRadius.circular(AppConstants.radiusL),
         boxShadow: [
           BoxShadow(
-            color: AppColors.gradientEnd.withValues(alpha: 0.35),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.25),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -39,17 +43,18 @@ class BalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Total Balance',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            'ยอดเงินคงเหลือรวม',
+            style: TextStyle(color: Colors.white70, fontSize: 13.5, fontFamily: 'Inter'),
           ),
           const SizedBox(height: 6),
           Text(
-            Formatters.money(balance),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 34,
-              fontWeight: FontWeight.w700,
+            '$balancePrefix${Formatters.money(balance.abs())}',
+            style: TextStyle(
+              color: balanceColor,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
               height: 1.1,
+              fontFamily: 'Inter',
             ),
           ),
           const SizedBox(height: 18),
@@ -58,9 +63,9 @@ class BalanceCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   icon: Icons.arrow_downward_rounded,
-                  label: 'Income',
-                  value: Formatters.money(totalIncome),
-                  valueColor: const Color(0xFFDCFCE7),
+                  label: 'รายรับ (+)',
+                  value: '+${Formatters.money(totalIncome)}',
+                  valueColor: const Color(0xFF4ADE80), // Vibrant Green
                 ),
               ),
               Container(
@@ -71,9 +76,9 @@ class BalanceCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   icon: Icons.arrow_upward_rounded,
-                  label: 'Expense',
-                  value: Formatters.money(totalExpense),
-                  valueColor: const Color(0xFFFFE4D6),
+                  label: 'รายจ่าย (-)',
+                  value: '-${Formatters.money(totalExpense)}',
+                  valueColor: const Color(0xFFF87171), // Vibrant Red
                   alignEnd: true,
                 ),
               ),
