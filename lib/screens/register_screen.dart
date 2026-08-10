@@ -174,16 +174,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submit.isBusy ? null : _register,
-                  child: _submit.isBusy
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text('Register'),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.gradientStart, AppColors.limeAccent],
+                    ),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _submit.isBusy ? null : _register,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                      ),
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: _submit.isBusy
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Text('Register'),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Row(
@@ -199,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: const Text(
                         'Login',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.primaryDark,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
