@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Welcome back',
+                  'Welcome',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 26,
@@ -117,16 +117,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submit.isBusy ? null : _login,
-                  child: _submit.isBusy
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text('Login'),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.gradientStart, AppColors.limeAccent],
+                    ),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _submit.isBusy ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                      ),
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: _submit.isBusy
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Text('Login'),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Row(
@@ -143,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         'Register',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.primaryDark,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
