@@ -669,8 +669,12 @@ class _BalanceSection extends StatelessWidget {
                 // ตัวเลขยอดเงินคงเหลือขนาดใหญ่
                 Text(
                   formattedBalance,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: hideBalance
+                        ? Colors.white
+                        : (isPositive
+                            ? AppColors.limeAccent
+                            : const Color(0xFFF87171)),
                     fontSize: 34,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.6,
@@ -730,11 +734,11 @@ class _BalanceSection extends StatelessWidget {
                                   Text(
                                     hideBalance
                                         ? '•••'
-                                        : Formatters.money(totalIncome),
+                                        : '+${Formatters.money(totalIncome)}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.limeAccent,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Inter',
@@ -787,11 +791,11 @@ class _BalanceSection extends StatelessWidget {
                                   Text(
                                     hideBalance
                                         ? '•••'
-                                        : Formatters.money(totalExpense),
+                                        : '-${Formatters.money(totalExpense)}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Color(0xFFF87171),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Inter',
