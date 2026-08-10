@@ -41,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
   String? _error;
   int _activeNavIndex = 0;
+  bool _hideBalance = false;
+  int _unreadNotificationCount = 2;
 
   @override
   void initState() {
@@ -58,11 +60,20 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final now = DateTime.now();
       final monthStart = Formatters.apiDate(DateTime(now.year, now.month, 1));
-      final monthEnd = Formatters.apiDate(DateTime(now.year, now.month, now.day));
+      final monthEnd = Formatters.apiDate(
+        DateTime(now.year, now.month, now.day),
+      );
       final lastMonth = DateTime(now.year, now.month - 1, 1);
       final results = await Future.wait([
-        TransactionService.list(token: token, startDate: monthStart, endDate: monthEnd),
-        TransactionService.report(token: token, month: Formatters.monthKey(lastMonth)),
+        TransactionService.list(
+          token: token,
+          startDate: monthStart,
+          endDate: monthEnd,
+        ),
+        TransactionService.report(
+          token: token,
+          month: Formatters.monthKey(lastMonth),
+        ),
       ]);
       if (!mounted) return;
       setState(() {
@@ -90,10 +101,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openAdd(String type) async {
-    final screen = type == 'income' ? const AddIncomeScreen() : const AddExpenseScreen();
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    final screen = type == 'income'
+        ? const AddIncomeScreen()
+        : const AddExpenseScreen();
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => screen));
     if (saved == true && mounted) {
       _load();
     }
@@ -102,44 +115,64 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openAddSheet() {
     showModalBottomSheet<void>(
       context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'เพิ่มรายการ',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _AddOption(
-                icon: Icons.add_circle_outline,
-                label: 'บันทึกรายรับ',
-                color: AppColors.income,
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _openAdd('income');
-                },
-              ),
-              const SizedBox(height: 10),
-              _AddOption(
-                icon: Icons.remove_circle_outline,
-                label: 'บันทึกรายจ่าย',
-                color: AppColors.expense,
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _openAdd('expense');
-                },
-              ),
-            ],
+                const SizedBox(height: 18),
+                const Text(
+                  'เพิ่มรายการใหม่',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _AddOption(
+                  icon: Icons.arrow_downward_rounded,
+                  label: 'บันทึกรายรับ (Income)',
+                  color: AppColors.income,
+                  accentColor: AppColors.limeAccent,
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _openAdd('income');
+                  },
+                ),
+                const SizedBox(height: 12),
+                _AddOption(
+                  icon: Icons.arrow_upward_rounded,
+                  label: 'บันทึกรายจ่าย (Expense)',
+                  color: AppColors.expenseRed,
+                  accentColor: const Color(0xFFFEE2E2),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _openAdd('expense');
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -176,6 +209,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _scaffoldKey.currentState?.openDrawer();
   }
 
+  void _openNotificationsSheet(User? user) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => NotificationsSheet(
+        user: user,
+        onNavigateToStats: _navigateToStatistics,
+        onNavigateToTransactions: _navigateToTransactions,
+        onUnreadCountChanged: (count) {
+          setState(() {
+            _unreadNotificationCount = count;
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionManager>();
@@ -183,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAFC),
       drawer: AppDrawer(
         user: user,
         onNavigate: _handleDrawerAction,
@@ -216,26 +267,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  int _unreadNotificationCount = 2;
-
-  void _openNotificationsSheet(User? user) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => NotificationsSheet(
-        user: user,
-        onNavigateToStats: _navigateToStatistics,
-        onNavigateToTransactions: _navigateToTransactions,
-        onUnreadCountChanged: (count) {
-          setState(() {
-            _unreadNotificationCount = count;
-          });
-        },
-      ),
-    );
-  }
-
   Widget _buildHomeBody(User? user) {
     if (_loading && _page == null) {
       return const HomeSkeletonView();
@@ -245,101 +276,109 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final balance = _page?.summary.balance ?? 0;
+    final totalIncome = _page?.summary.totalIncome ?? 0;
+    final totalExpense = _page?.summary.totalExpense ?? 0;
     final lastMonthIncome = _report?.summary.totalIncome ?? 0;
     final lastMonthExpense = _report?.summary.totalExpense ?? 0;
     final lastMonthSavings = lastMonthIncome - lastMonthExpense;
 
     final String savingsText;
     if (lastMonthSavings > 0) {
-      savingsText = 'เดือนที่แล้วคุณประหยัดได้ ${Formatters.money(lastMonthSavings)} >';
+      savingsText =
+          'เดือนที่แล้วประหยัดได้ ${Formatters.money(lastMonthSavings)}';
     } else if (lastMonthExpense > 0) {
-      savingsText = 'เดือนที่แล้วคุณใช้จ่ายไป ${Formatters.money(lastMonthExpense)} >';
+      savingsText = 'เดือนที่แล้วใช้จ่าย ${Formatters.money(lastMonthExpense)}';
     } else {
-      savingsText = 'ดูสรุปรายงานการเงินเดือนที่แล้ว >';
+      savingsText = 'ดูสรุปรายงานการเงินเดือนที่แล้ว';
     }
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: AppColors.primary,
+      color: AppColors.limeAccentDark,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
-          AppConstants.pagePadding, 8, AppConstants.pagePadding, 24,
+          AppConstants.pagePadding,
+          10,
+          AppConstants.pagePadding,
+          28,
         ),
         children: [
-          // ส่วนหัว: ปุ่มเมนู, "บัญชีของฉัน", ปุ่มแจ้งเตือน
+          // ส่วนหัว: Avatar + ทักทาย + ปุ่มแจ้งเตือน/เมนู
           _TopHeaderBar(
-            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            user: user,
+            onMenuTap: _openDrawer,
             onNotificationTap: () => _openNotificationsSheet(user),
             unreadCount: _unreadNotificationCount,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // ส่วนแสดงยอดเงินคงเหลือ (ยอดเงินคงเหลือ + ฿86,290.49 + ป้ายไฮไลท์ออมเงิน)
+          // การ์ดยอดเงินคงเหลือ Hero Balance Card ในธีม Lime Accent
           _BalanceSection(
             balance: balance,
+            totalIncome: totalIncome,
+            totalExpense: totalExpense,
+            hideBalance: _hideBalance,
+            onToggleHideBalance: () {
+              setState(() => _hideBalance = !_hideBalance);
+            },
             savingsText: savingsText,
             onSavingsTap: _navigateToStatistics,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
-          // ปุ่มทางลัด 4 ปุ่ม: รายรับ, รายจ่าย, สถิติ, ประวัติ
+          // 4 ปุ่มทางลัด (รายรับ, รายจ่าย, สถิติ, ประวัติ)
           _QuickActionsRow(
-            onSendTap: () => _openAdd('income'),
-            onRequestTap: () => _openAdd('expense'),
-            onExchangeTap: _navigateToStatistics,
-            onMoreTap: _navigateToTransactions,
+            onIncomeTap: () => _openAdd('income'),
+            onExpenseTap: () => _openAdd('expense'),
+            onStatsTap: _navigateToStatistics,
+            onHistoryTap: _navigateToTransactions,
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 26),
 
-          // ส่วนประวัติรายการ
+          // ส่วนประวัติรายการล่าสุด
           _SectionHeader(
-            title: 'ประวัติรายการ',
+            title: 'ประวัติรายการล่าสุด',
             onViewAll: _navigateToTransactions,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'วันนี้',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              fontFamily: 'Inter',
-            ),
-          ),
-          const SizedBox(height: 8),
 
           if (_loading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CircularProgressIndicator(
+                  color: AppColors.limeAccentDark,
+                ),
               ),
             )
           else if (_page == null || _page!.transactions.isEmpty)
             EmptyView(
               icon: Icons.receipt_long_outlined,
-              title: 'ยังไม่มีรายการ',
-              subtitle: 'เพิ่มรายรับหรือรายจ่ายแรกของคุณเพื่อเริ่มต้น',
+              title: 'ยังไม่มีรายการในเดือนนี้',
+              subtitle: 'เพิ่มรายรับหรือรายจ่ายแรกของคุณเพื่อเริ่มต้นบันทึก',
               actionLabel: 'เพิ่มรายการ',
               onAction: _openAddSheet,
             )
           else
-            ..._page!.transactions.take(6).map(
+            ..._page!.transactions
+                .take(6)
+                .map(
                   (t) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: TransactionCard(
                       transaction: t,
                       onTap: () => Navigator.of(context)
-                          .push(MaterialPageRoute(
-                            builder: (_) => t.isIncome
-                                ? AddIncomeScreen(transaction: t)
-                                : AddExpenseScreen(transaction: t),
-                          ))
+                          .push(
+                            MaterialPageRoute(
+                              builder: (_) => t.isIncome
+                                  ? AddIncomeScreen(transaction: t)
+                                  : AddExpenseScreen(transaction: t),
+                            ),
+                          )
                           .then((changed) {
-                        if (changed == true && mounted) _load();
-                      }),
+                            if (changed == true && mounted) _load();
+                          }),
                     ),
                   ),
                 ),
@@ -350,14 +389,16 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ============================================================================
-// TOP HEADER BAR: ปุ่มเมนู, หัวข้อ "บัญชีของฉัน", ปุ่มแจ้งเตือน
+// TOP HEADER BAR: Avatar + ทักทาย + ปุ่มเมนู & แจ้งเตือน
 // ============================================================================
 class _TopHeaderBar extends StatelessWidget {
+  final User? user;
   final VoidCallback onMenuTap;
   final VoidCallback onNotificationTap;
   final int unreadCount;
 
   const _TopHeaderBar({
+    required this.user,
     required this.onMenuTap,
     required this.onNotificationTap,
     required this.unreadCount,
@@ -365,64 +406,122 @@ class _TopHeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = user?.fname.isNotEmpty == true ? user!.fname : 'คุณ';
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // ปุ่มเมนู
+        // Avatar + ปุ่มเปิด Drawer
         InkWell(
           onTap: onMenuTap,
           borderRadius: BorderRadius.circular(22),
           child: Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.limeAccent, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: const Icon(
-              Icons.subject_rounded,
-              color: AppColors.textPrimary,
-              size: 22,
+            child: Center(
+              child: Text(
+                user?.initials ?? 'F',
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Inter',
+                ),
+              ),
             ),
           ),
         ),
-        // หัวข้อหน้า
-        const Text(
-          'บัญชีของฉัน',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Inter',
+        const SizedBox(width: 12),
+        // ทักทายผู้ใช้ & กระเป๋าเงินหลัก
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'สวัสดี, $name 👋',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF84CC16),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Text(
+                    'กระเป๋าเงินหลัก Finly',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        // ปุ่มแจ้งเตือนพร้อม Badge ตามจำนวนจริง
+        // ปุ่มแจ้งเตือน
         InkWell(
           onTap: onNotificationTap,
           borderRadius: BorderRadius.circular(22),
           child: Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 const Center(
                   child: Icon(
-                    Icons.notifications_none_rounded,
+                    Icons.notifications_outlined,
                     color: AppColors.textPrimary,
                     size: 22,
                   ),
                 ),
                 if (unreadCount > 0)
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 6,
+                    right: 6,
                     child: Container(
-                      padding: const EdgeInsets.all(3.5),
+                      padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
                         color: AppColors.limeAccent,
                         shape: BoxShape.circle,
@@ -435,9 +534,9 @@ class _TopHeaderBar extends StatelessWidget {
                         '$unreadCount',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: AppColors.textPrimary,
+                          color: Color(0xFF1E293B),
                           fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
@@ -451,18 +550,24 @@ class _TopHeaderBar extends StatelessWidget {
   }
 }
 
-
-
 // ============================================================================
-// BALANCE SECTION: ยอดเงินคงเหลือ, ฿86,290.49, ป้ายไฮไลท์ออมเงินสีม่วง
+// BALANCE SECTION: Modern High-End Fintech Hero Card with Lime Accent
 // ============================================================================
 class _BalanceSection extends StatelessWidget {
   final double balance;
+  final double totalIncome;
+  final double totalExpense;
+  final bool hideBalance;
+  final VoidCallback onToggleHideBalance;
   final String savingsText;
   final VoidCallback onSavingsTap;
 
   const _BalanceSection({
     required this.balance,
+    required this.totalIncome,
+    required this.totalExpense,
+    required this.hideBalance,
+    required this.onToggleHideBalance,
     required this.savingsText,
     required this.onSavingsTap,
   });
@@ -470,66 +575,287 @@ class _BalanceSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = balance >= 0;
-    final balanceColor = isPositive ? AppColors.income : AppColors.expenseRed;
     final balancePrefix = isPositive ? '+' : '-';
+    final formattedBalance = hideBalance
+        ? '••••••••'
+        : '$balancePrefix${Formatters.money(balance.abs())}';
 
-    return Column(
-      children: [
-        const Text(
-          'ยอดเงินคงเหลือ',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Inter',
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827), // Sleek obsidian/slate dark background
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF111827).withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '$balancePrefix${Formatters.money(balance.abs())}',
-          style: TextStyle(
-            color: balanceColor,
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-            height: 1.1,
-            fontFamily: 'Inter',
-          ),
-        ),
-        const SizedBox(height: 12),
-        // ป้ายประหยัดเงินสีม่วง
-        InkWell(
-          onTap: onSavingsTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              color: AppColors.purpleBadgeBg,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.auto_awesome,
-                  color: AppColors.purpleBadgeText,
-                  size: 15,
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Background subtle lime gradient glow in the top right corner
+          Positioned(
+            right: -25,
+            top: -25,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.limeAccent.withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
                 ),
-                const SizedBox(width: 6),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Card Top: Label + Wallet chip + Eye icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.limeAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.limeAccent.withValues(
+                                alpha: 0.4,
+                              ),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.account_balance_wallet_rounded,
+                                color: AppColors.limeAccent,
+                                size: 12.5,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'ยอดเงินคงเหลือ',
+                                style: TextStyle(
+                                  color: AppColors.limeAccent,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // ตัวเลขยอดเงินคงเหลือขนาดใหญ่
                 Text(
-                  savingsText,
+                  formattedBalance,
                   style: const TextStyle(
-                    color: AppColors.purpleBadgeText,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    height: 1.1,
                     fontFamily: 'Inter',
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // เส้นประ / แถบสรุปรายรับ - รายจ่ายเดือนนี้
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // รายรับเดือนนี้
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.limeAccent.withValues(
+                                  alpha: 0.2,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_downward_rounded,
+                                color: AppColors.limeAccent,
+                                size: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'รายรับ',
+                                    style: TextStyle(
+                                      color: Color(0xFF94A3B8),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                  Text(
+                                    hideBalance
+                                        ? '•••'
+                                        : Formatters.money(totalIncome),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                      const SizedBox(width: 12),
+                      // รายจ่ายเดือนนี้
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFEF4444,
+                                ).withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Color(0xFFF87171),
+                                size: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'รายจ่าย',
+                                    style: TextStyle(
+                                      color: Color(0xFF94A3B8),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                  Text(
+                                    hideBalance
+                                        ? '•••'
+                                        : Formatters.money(totalExpense),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // ป้ายไฮไลท์ออมเงิน / สรุปเดือนที่แล้ว
+                InkWell(
+                  onTap: onSavingsTap,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.limeAccent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF1E293B),
+                          size: 15,
+                        ),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            savingsText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF1E293B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF1E293B),
+                          size: 18,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -538,16 +864,16 @@ class _BalanceSection extends StatelessWidget {
 // QUICK ACTIONS ROW: 4 ปุ่มทางลัด (รายรับ, รายจ่าย, สถิติ, ประวัติ)
 // ============================================================================
 class _QuickActionsRow extends StatelessWidget {
-  final VoidCallback onSendTap;
-  final VoidCallback onRequestTap;
-  final VoidCallback onExchangeTap;
-  final VoidCallback onMoreTap;
+  final VoidCallback onIncomeTap;
+  final VoidCallback onExpenseTap;
+  final VoidCallback onStatsTap;
+  final VoidCallback onHistoryTap;
 
   const _QuickActionsRow({
-    required this.onSendTap,
-    required this.onRequestTap,
-    required this.onExchangeTap,
-    required this.onMoreTap,
+    required this.onIncomeTap,
+    required this.onExpenseTap,
+    required this.onStatsTap,
+    required this.onHistoryTap,
   });
 
   @override
@@ -556,31 +882,35 @@ class _QuickActionsRow extends StatelessWidget {
       children: [
         Expanded(
           child: _ActionCard(
-            icon: Icons.north_east_rounded,
+            icon: Icons.add_circle_outline_rounded,
             label: 'รายรับ',
             backgroundColor: AppColors.limeAccent,
-            iconColor: AppColors.textPrimary,
-            onTap: onSendTap,
+            iconColor: const Color(0xFF111827),
+            textColor: const Color(0xFF111827),
+            isPrimary: true,
+            onTap: onIncomeTap,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _ActionCard(
-            icon: Icons.south_west_rounded,
+            icon: Icons.remove_circle_outline_rounded,
             label: 'รายจ่าย',
             backgroundColor: Colors.white,
-            iconColor: AppColors.textPrimary,
-            onTap: onRequestTap,
+            iconColor: const Color(0xFFE11D48),
+            textColor: AppColors.textPrimary,
+            onTap: onExpenseTap,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _ActionCard(
-            icon: Icons.bar_chart_rounded,
+            icon: Icons.insights_rounded,
             label: 'สถิติ',
             backgroundColor: Colors.white,
-            iconColor: AppColors.textPrimary,
-            onTap: onExchangeTap,
+            iconColor: const Color(0xFF2563EB),
+            textColor: AppColors.textPrimary,
+            onTap: onStatsTap,
           ),
         ),
         const SizedBox(width: 10),
@@ -589,8 +919,9 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.receipt_long_rounded,
             label: 'ประวัติ',
             backgroundColor: Colors.white,
-            iconColor: AppColors.textPrimary,
-            onTap: onMoreTap,
+            iconColor: const Color(0xFF0D9488),
+            textColor: AppColors.textPrimary,
+            onTap: onHistoryTap,
           ),
         ),
       ],
@@ -603,6 +934,8 @@ class _ActionCard extends StatelessWidget {
   final String label;
   final Color backgroundColor;
   final Color iconColor;
+  final Color textColor;
+  final bool isPrimary;
   final VoidCallback onTap;
 
   const _ActionCard({
@@ -610,40 +943,54 @@ class _ActionCard extends StatelessWidget {
     required this.label,
     required this.backgroundColor,
     required this.iconColor,
+    required this.textColor,
+    this.isPrimary = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isWhite = backgroundColor == Colors.white;
     return Material(
       color: backgroundColor,
       borderRadius: BorderRadius.circular(20),
-      elevation: isWhite ? 0.5 : 0,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
+      elevation: isPrimary ? 2 : 0,
+      shadowColor: isPrimary
+          ? AppColors.limeAccent.withValues(alpha: 0.35)
+          : Colors.black.withValues(alpha: 0.04),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: isPrimary
+                ? Border.all(
+                    color: AppColors.limeAccentDark.withValues(alpha: 0.3),
+                    width: 1,
+                  )
+                : Border.all(color: const Color(0xFFF1F5F9), width: 1),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
           child: Column(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: isWhite ? AppColors.background : Colors.white.withValues(alpha: 0.4),
+                  color: isPrimary
+                      ? Colors.white.withValues(alpha: 0.35)
+                      : iconColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: 21),
               ),
               const SizedBox(height: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
                   fontFamily: 'Inter',
                 ),
               ),
@@ -669,35 +1016,52 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Inter',
-          ),
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 16,
+              decoration: BoxDecoration(
+                color: AppColors.limeAccentDark,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ],
         ),
-        GestureDetector(
+        InkWell(
           onTap: onViewAll,
-          child: const Row(
-            children: [
-              Text(
-                'ดูทั้งหมด',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Inter',
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: const Row(
+              children: [
+                Text(
+                  'ดูทั้งหมด',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                  ),
                 ),
-              ),
-              SizedBox(width: 2),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
-                size: 16,
-              ),
-            ],
+                SizedBox(width: 2),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
+                  size: 17,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -706,7 +1070,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ============================================================================
-// BOTTOM NAVIGATION BAR: 5 เมนูภาษาไทย พร้อมปุ่มสีเขียวตรงกลาง
+// BOTTOM NAVIGATION BAR: 5 เมนู พร้อมปุ่ม Add เด่นตรงกลางธีม Lime Accent
 // ============================================================================
 class _BottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -722,11 +1086,11 @@ class _BottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
             offset: const Offset(0, -4),
           ),
         ],
@@ -734,12 +1098,12 @@ class _BottomNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 64,
+          height: 68,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavItem(
-                icon: Icons.home_rounded,
+                icon: Icons.grid_view_rounded,
                 label: 'หน้าหลัก',
                 selected: selectedIndex == 0,
                 onTap: () => onItemTapped(0),
@@ -750,27 +1114,28 @@ class _BottomNavBar extends StatelessWidget {
                 selected: selectedIndex == 1,
                 onTap: () => onItemTapped(1),
               ),
-              // ปุ่มตรงกลางสีเขียวสว่างสำหรับเพิ่มรายการ
+              // ปุ่มตรงกลางสีเขียวสว่าง Lime Accent พร้อม Shadow อิ่มสวย
               GestureDetector(
                 onTap: () => onItemTapped(2),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
                     color: AppColors.limeAccent,
                     shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.limeAccent.withValues(alpha: 0.4),
-                        blurRadius: 10,
+                        color: AppColors.limeAccentDark.withValues(alpha: 0.45),
+                        blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: const Icon(
                     Icons.add_rounded,
-                    color: AppColors.textPrimary,
-                    size: 28,
+                    color: Color(0xFF111827),
+                    size: 30,
                   ),
                 ),
               ),
@@ -809,12 +1174,12 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.textPrimary : AppColors.textSecondary;
+    final color = selected ? const Color(0xFF111827) : const Color(0xFF94A3B8);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -825,10 +1190,21 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
                 fontFamily: 'Inter',
               ),
             ),
+            if (selected) ...[
+              const SizedBox(height: 3),
+              Container(
+                width: 14,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: AppColors.limeAccentDark,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -840,37 +1216,57 @@ class _AddOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
+  final Color accentColor;
   final VoidCallback onTap;
 
   const _AddOption({
     required this.icon,
     required this.label,
     required this.color,
+    required this.accentColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
           child: Row(
             children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter',
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.textSecondary,
+                size: 16,
               ),
             ],
           ),

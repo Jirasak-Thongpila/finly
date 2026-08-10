@@ -359,24 +359,24 @@ class _LogoutCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Container(
                   width: 38,
                   height: 38,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Color(0xFFFFE4E6),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.logout_rounded,
                     color: Color(0xFFE11D48),
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'ออกจากระบบ',
                     style: TextStyle(
@@ -387,7 +387,7 @@ class _LogoutCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: Color(0xFFE11D48),
                   size: 14,
