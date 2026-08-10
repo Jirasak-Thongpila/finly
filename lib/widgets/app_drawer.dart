@@ -4,10 +4,7 @@ import '../models/user.dart';
 import '../utils/constants.dart';
 import '../utils/drawer_actions.dart';
 
-/// Redesigned AppDrawer matching the modern fintech design system:
-/// - Dark Charcoal Header with Lime Green Avatar Ring and Finly Tag.
-/// - Rounded floating menu items with colored icon badges and chevrons.
-/// - Soft red bottom logout card.
+/// Redesigned AppDrawer - Lime Accent Fintech Theme (Safe Version)
 class AppDrawer extends StatelessWidget {
   final User? user;
   final ValueChanged<DrawerAction> onNavigate;
@@ -25,71 +22,89 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAF8), // Soft Light Greenish-Gray
       elevation: 0,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(28)),
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(32)),
       ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             children: [
-              // 1. ส่วนหัวโปรไฟล์ดีไซน์การ์ดสีเข้ม (Dark Charcoal Profile Card)
+              // 1. Profile Header with Lime Gradient Glow & Glass Badge
               _DrawerProfileHeader(user: user),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // 2. รายการเมนูหลัก (Modern Floating Menu Items)
+              // 2. Menu Items Container
               Expanded(
                 child: ListView(
                   physics: const BouncingScrollPhysics(),
                   children: [
                     _DrawerMenuItem(
-                      icon: Icons.home_rounded,
+                      icon: Icons.grid_view_rounded,
                       label: 'หน้าหลัก',
-                      iconBgColor: AppColors.limeAccent,
-                      iconColor: AppColors.textPrimary,
-                      onTap: () => onNavigate(DrawerAction.home),
+                      badgeColor: AppColors.limeAccent,
+                      iconColor: const Color(0xFF1E293B),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onNavigate(DrawerAction.home);
+                      },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _DrawerMenuItem(
                       icon: Icons.receipt_long_rounded,
                       label: 'ประวัติรายการ',
-                      iconBgColor: const Color(0xFFEFF6FF),
-                      iconColor: const Color(0xFF2563EB),
-                      onTap: () => onNavigate(DrawerAction.transactions),
+                      badgeColor: const Color(0xFFE0F2FE),
+                      iconColor: const Color(0xFF0284C7),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onNavigate(DrawerAction.transactions);
+                      },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _DrawerMenuItem(
                       icon: Icons.add_circle_outline_rounded,
                       label: 'เพิ่มรายรับ',
-                      iconBgColor: const Color(0xFFDCFCE7),
-                      iconColor: AppColors.income,
-                      onTap: () => onAddTransaction('income'),
+                      badgeColor: const Color(0xFFDCFCE7),
+                      iconColor: const Color(0xFF16A34A),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onAddTransaction('income');
+                      },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _DrawerMenuItem(
                       icon: Icons.remove_circle_outline_rounded,
                       label: 'เพิ่มรายจ่าย',
-                      iconBgColor: const Color(0xFFFEE2E2),
-                      iconColor: AppColors.expenseRed,
-                      onTap: () => onAddTransaction('expense'),
+                      badgeColor: const Color(0xFFFEE2E2),
+                      iconColor: const Color(0xFFDC2626),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onAddTransaction('expense');
+                      },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _DrawerMenuItem(
-                      icon: Icons.bar_chart_rounded,
+                      icon: Icons.insights_rounded,
                       label: 'สถิติการเงิน',
-                      iconBgColor: const Color(0xFFF3E8FF),
-                      iconColor: AppColors.purpleBadgeText,
-                      onTap: () => onNavigate(DrawerAction.statistics),
+                      badgeColor: const Color(0xFFF3E8FF),
+                      iconColor: const Color(0xFF9333EA),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onNavigate(DrawerAction.statistics);
+                      },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _DrawerMenuItem(
-                      icon: Icons.settings_outlined,
+                      icon: Icons.tune_rounded,
                       label: 'ตั้งค่า',
-                      iconBgColor: const Color(0xFFF3F4F6),
-                      iconColor: AppColors.textPrimary,
-                      onTap: () => onNavigate(DrawerAction.settings),
+                      badgeColor: const Color(0xFFF1F5F9),
+                      iconColor: const Color(0xFF64748B),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onNavigate(DrawerAction.settings);
+                      },
                     ),
                   ],
                 ),
@@ -97,7 +112,7 @@ class AppDrawer extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // 3. ปุ่มออกจากระบบดีไซน์การ์ดสีแดงอ่อน (Logout Button)
+              // 3. Logout Button Card
               _LogoutCard(
                 onTap: () {
                   Navigator.of(context).pop();
@@ -113,7 +128,7 @@ class AppDrawer extends StatelessWidget {
 }
 
 // ============================================================================
-// PROFILE HEADER: การ์ดสีเข้ม + อวตารขอบสีเขียว Lime + ป้าย Finly
+// PROFILE HEADER: การ์ดโปรไฟล์พื้นหลังเข้ม ตัดกับวงแหวน Lime Green
 // ============================================================================
 class _DrawerProfileHeader extends StatelessWidget {
   final User? user;
@@ -128,15 +143,19 @@ class _DrawerProfileHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF16251C), // Deep Charcoal Dark
-        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF18221B), Color(0xFF0F1713)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF18221B).withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -145,28 +164,35 @@ class _DrawerProfileHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Avatar with Lime Green Ring
+              // Avatar พร้อม Lime Glow Ring
               Container(
-                padding: const EdgeInsets.all(2.5),
-                decoration: const BoxDecoration(
-                  color: AppColors.limeAccent,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  color: AppColors.limeAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.limeAccent.withValues(alpha: 0.4),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundColor: Colors.white,
+                  backgroundColor: const Color(0xFF0F1713),
                   child: Text(
                     initials,
                     style: const TextStyle(
-                      color: Color(0xFF16251C),
+                      color: AppColors.limeAccent,
                       fontWeight: FontWeight.w800,
-                      fontSize: 17,
+                      fontSize: 18,
                       fontFamily: 'Inter',
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,19 +203,20 @@ class _DrawerProfileHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 16.5,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Inter',
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.65),
+                        fontSize: 12.5,
                         fontFamily: 'Inter',
                       ),
                     ),
@@ -198,30 +225,31 @@ class _DrawerProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          // Finly Member Tag Badge
+          const SizedBox(height: 16),
+          // Tag Badge สี Lime Accent
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.limeAccent.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.limeAccent.withValues(alpha: 0.3),
+                width: 1,
+              ),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.auto_awesome,
-                  color: AppColors.limeAccent,
-                  size: 13,
-                ),
+                Icon(Icons.auto_awesome, color: AppColors.limeAccent, size: 13),
                 SizedBox(width: 6),
                 Text(
                   'Finly Member',
                   style: TextStyle(
                     color: AppColors.limeAccent,
                     fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Inter',
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
@@ -234,64 +262,74 @@ class _DrawerProfileHeader extends StatelessWidget {
 }
 
 // ============================================================================
-// DRAWER MENU ITEM: การ์ดเมนูทรงมนพร้อมไอคอนและลูกศร
+// DRAWER MENU ITEM: การ์ดเมนูทรงมน
 // ============================================================================
 class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color iconBgColor;
+  final Color badgeColor;
   final Color iconColor;
   final VoidCallback onTap;
 
   const _DrawerMenuItem({
     required this.icon,
     required this.label,
-    required this.iconBgColor,
+    required this.badgeColor,
     required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0.5,
-      shadowColor: Colors.black.withValues(alpha: 0.04),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: badgeColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Inter',
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF334155),
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Inter',
+                    ),
                   ),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
-                size: 18,
-              ),
-            ],
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFF94A3B8),
+                  size: 14,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -300,7 +338,7 @@ class _DrawerMenuItem extends StatelessWidget {
 }
 
 // ============================================================================
-// LOGOUT CARD: การ์ดปุ่มออกจากระบบสีแดงอ่อน
+// LOGOUT CARD: การ์ดปุ่มออกจากระบบ
 // ============================================================================
 class _LogoutCard extends StatelessWidget {
   final VoidCallback onTap;
@@ -309,39 +347,53 @@ class _LogoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFFEF2F2), // Soft red background
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          child: Row(
-            children: [
-              Icon(
-                Icons.logout_rounded,
-                color: AppColors.expenseRed,
-                size: 20,
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'ออกจากระบบ',
-                  style: TextStyle(
-                    color: AppColors.expenseRed,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Inter',
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFECDD3), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFE4E6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: Color(0xFFE11D48),
+                    size: 18,
                   ),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.expenseRed,
-                size: 18,
-              ),
-            ],
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'ออกจากระบบ',
+                    style: TextStyle(
+                      color: Color(0xFFE11D48),
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFFE11D48),
+                  size: 14,
+                ),
+              ],
+            ),
           ),
         ),
       ),
