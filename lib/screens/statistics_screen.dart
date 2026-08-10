@@ -131,6 +131,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       helpText: 'เลือกเดือนสำหรับดูสถิติ',
       cancelText: 'ยกเลิก',
       confirmText: 'ตกลง',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF65A30D),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: AppColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) {
       _selectMonth(picked);
@@ -589,8 +600,10 @@ class _StatisticsBalanceHeroCard extends StatelessWidget {
                 // ยอดคงเหลือสุทธิ
                 Text(
                   '$balancePrefix${Formatters.money(balance.abs())}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isPositive
+                        ? AppColors.limeAccent
+                        : const Color(0xFFF87171),
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.6,
@@ -652,7 +665,7 @@ class _StatisticsBalanceHeroCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.limeAccent,
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Inter',
@@ -707,7 +720,7 @@ class _StatisticsBalanceHeroCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Color(0xFFF87171),
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Inter',
@@ -1005,16 +1018,16 @@ class _MonthSelectorBar extends StatelessWidget {
     final labelText = '$monthName $year';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -1022,11 +1035,25 @@ class _MonthSelectorBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // ปุ่มเดือนก่อนหน้า
-          IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, size: 28),
-            color: AppColors.textPrimary,
-            onPressed: onPrevious,
-            tooltip: 'เดือนก่อนหน้า',
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPrevious,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Icon(
+                  Icons.chevron_left_rounded,
+                  size: 22,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
           ),
 
           // แสดงชื่อเดือนและปฏิทิน (กดเพื่อเปิด DatePicker)
@@ -1034,17 +1061,19 @@ class _MonthSelectorBar extends StatelessWidget {
             onTap: onSelect,
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.limeAccent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: AppColors.limeAccentDark.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.calendar_month_rounded,
-                    color: Color(0xFF84CC16),
+                    color: Color(0xFF4D7C0F),
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -1069,11 +1098,25 @@ class _MonthSelectorBar extends StatelessWidget {
           ),
 
           // ปุ่มเดือนถัดไป
-          IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, size: 28),
-            color: AppColors.textPrimary,
-            onPressed: onNext,
-            tooltip: 'เดือนถัดไป',
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onNext,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
           ),
         ],
       ),

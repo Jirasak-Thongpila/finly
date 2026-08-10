@@ -389,10 +389,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                     decoration: InputDecoration(
                                       hintText: '0.00',
                                       hintStyle: TextStyle(
-                                        color: (_isIncome
-                                                ? AppColors.limeAccent
-                                                : const Color(0xFFEF4444))
-                                            .withValues(alpha: 0.3),
+                                        color:
+                                            (_isIncome
+                                                    ? AppColors.limeAccent
+                                                    : const Color(0xFFEF4444))
+                                                .withValues(alpha: 0.3),
                                         fontSize: 36,
                                         fontWeight: FontWeight.w800,
                                       ),
