@@ -21,19 +21,19 @@ class WelcomeScreen extends StatelessWidget {
               _Illustration(),
               const SizedBox(height: 32),
               Text(
-                'Manage Your Money',
+                'Welcome to Finly',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 26,
+                  fontSize: 30,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Inter',
                 ),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Track your income and expenses, understand your '
-                'spending, and stay on top of your personal finances.',
+                'Track your income and expenses, understand your'
+                'spending, and stay on top of your personal finances.', 
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -42,14 +42,41 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(flex: 2),
-              ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/register'),
-                child: const Text('Get Started'),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.gradientStart, AppColors.limeAccent],
+                  ),
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pushNamed('/register'),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                    ),
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  child: const Text('Get Started'),
+                ),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pushNamed('/login'),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1.8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                  ),
+                  minimumSize: const Size.fromHeight(52),
+                ),
                 child: const Text('Login'),
               ),
             ],
@@ -70,22 +97,12 @@ class _Logo extends StatelessWidget {
           height: 64,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [AppColors.gradientStart, AppColors.gradientEnd],
+              colors: [AppColors.gradientStart, AppColors.limeAccent],
             ),
             borderRadius: BorderRadius.circular(AppConstants.radiusL),
           ),
           child: const Icon(Icons.account_balance_wallet_rounded,
               color: Colors.white, size: 32),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Finly',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Inter',
-          ),
         ),
       ],
     );
@@ -128,11 +145,21 @@ class _Coin extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.primaryLight,
+          gradient: LinearGradient(
+            colors: [
+              AppColors.limeAccent.withValues(alpha: 0.85),
+              AppColors.primary.withValues(alpha: 0.95),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.5),
+          border: Border.all(
+            color: AppColors.limeAccent.withValues(alpha: 0.45),
+            width: 1.5,
+          ),
         ),
-        child: Icon(icon, color: AppColors.primaryDark, size: size * 0.45),
+        child: Icon(icon, color: Colors.white, size: size * 0.45),
       ),
     );
   }
