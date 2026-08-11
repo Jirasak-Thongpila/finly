@@ -10,6 +10,8 @@ import '../utils/constants.dart';
 import '../utils/drawer_actions.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/notifications_sheet.dart';
+import '../widgets/skeleton_loaders.dart';
 import '../widgets/state_views.dart';
 import '../widgets/transaction_card.dart';
 import 'add_expense_screen.dart';
@@ -18,14 +20,13 @@ import 'settings_screen.dart';
 import 'statistics_screen.dart';
 import 'transactions_screen.dart';
 
-/// Dashboard matching the target fintech mobile design:
-/// - Header with Menu button, "My Account" title, and Notification badge.
-/// - Card selector badge (`**** 3425`).
-/// - "Your Balance" centered large display with lavender savings highlight pill.
-/// - 4 Quick Action cards: Send (Lime Green), Request, Exchange, More.
-/// - "Top Merchants" horizontal card section.
-/// - "Transaction History" list section with TODAY header.
-/// - Bottom Navigation bar with elevated lime green center action button.
+/// Dashboard (ภาษาไทย)
+/// - ส่วนหัว: ปุ่มเมนู, หัวข้อ "บัญชีของฉัน", ปุ่มแจ้งเตือน
+/// - ป้ายแสดงประเภทบัญชี/กระเป๋าเงิน ( wallet badge )
+/// - แสดงยอดเงินคงเหลือ "ยอดเงินคงเหลือ" พร้อมป้ายประหยัดเงินสีม่วง
+/// - 4 ปุ่มทางลัด: รายรับ, รายจ่าย, สถิติ, ประวัติ
+/// - ส่วนประวัติรายการล่าสุด (วันนี้)
+/// - แถบเมนูด้านล่าง 5 ปุ่มภาษาไทย (หน้าหลัก, สถิติ, ปุ่มเพิ่มรายการตรงกลาง, รายการ, โปรไฟล์)
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -55,11 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _error = null;
     });
     try {
-      final monthStart = Formatters.apiDate(DateTime(DateTime.now().year, DateTime.now().month, 1));
-      final monthEnd = Formatters.apiDate(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      final now = DateTime.now();
+      final monthStart = Formatters.apiDate(DateTime(now.year, now.month, 1));
+      final monthEnd = Formatters.apiDate(DateTime(now.year, now.month, now.day));
+      final lastMonth = DateTime(now.year, now.month - 1, 1);
       final results = await Future.wait([
         TransactionService.list(token: token, startDate: monthStart, endDate: monthEnd),
-        TransactionService.report(token: token, month: Formatters.monthKey(DateTime.now())),
+        TransactionService.report(token: token, month: Formatters.monthKey(lastMonth)),
       ]);
       if (!mounted) return;
       setState(() {
@@ -80,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unexpected error. Please try again.';
+        _error = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
         _loading = false;
       });
     }
@@ -107,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Add Transaction',
+                'เพิ่มรายการ',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -119,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
               _AddOption(
                 icon: Icons.add_circle_outline,
-                label: 'Add Income',
+                label: 'บันทึกรายรับ',
                 color: AppColors.income,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
@@ -129,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               _AddOption(
                 icon: Icons.remove_circle_outline,
-                label: 'Add Expense',
+                label: 'บันทึกรายจ่าย',
                 color: AppColors.expense,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
@@ -147,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).pop();
     switch (action) {
       case DrawerAction.home:
-        break;
+        setState(() => _activeNavIndex = 0);
       case DrawerAction.transactions:
         _navigateToTransactions();
       case DrawerAction.statistics:
@@ -158,24 +161,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToTransactions() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const TransactionsScreen()))
-        .then((changed) {
-      if (changed == true && mounted) _load();
-    });
+    setState(() => _activeNavIndex = 3);
   }
 
   void _navigateToStatistics() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const StatisticsScreen()));
+    setState(() => _activeNavIndex = 1);
   }
 
   void _navigateToSettings() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const SettingsScreen()))
-        .then((changed) {
-      if (changed == true && mounted) _load();
-    });
+    setState(() => _activeNavIndex = 4);
+  }
+
+  void _openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
   }
 
   @override
@@ -195,42 +193,70 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onLogout: () => session.logout(),
       ),
-      body: SafeArea(
-        child: _buildBody(user),
+      body: IndexedStack(
+        index: _activeNavIndex,
+        children: [
+          SafeArea(bottom: false, child: _buildHomeBody(user)),
+          StatisticsScreen(onMenuTap: _openDrawer),
+          const SizedBox.shrink(),
+          TransactionsScreen(onMenuTap: _openDrawer),
+          SettingsScreen(onMenuTap: _openDrawer),
+        ],
       ),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: _activeNavIndex,
         onItemTapped: (index) {
-          if (index == 0) {
-            setState(() => _activeNavIndex = 0);
-          } else if (index == 1) {
-            _navigateToStatistics();
-          } else if (index == 2) {
+          if (index == 2) {
             _openAddSheet();
-          } else if (index == 3) {
-            _navigateToTransactions();
-          } else if (index == 4) {
-            _navigateToSettings();
+          } else {
+            setState(() => _activeNavIndex = index);
           }
         },
       ),
     );
   }
 
-  Widget _buildBody(User? user) {
+  int _unreadNotificationCount = 2;
+
+  void _openNotificationsSheet(User? user) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => NotificationsSheet(
+        user: user,
+        onNavigateToStats: _navigateToStatistics,
+        onNavigateToTransactions: _navigateToTransactions,
+        onUnreadCountChanged: (count) {
+          setState(() {
+            _unreadNotificationCount = count;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildHomeBody(User? user) {
     if (_loading && _page == null) {
-      return const LoadingView(message: 'Loading your finances…');
+      return const HomeSkeletonView();
     }
     if (_error != null && _page == null) {
       return ErrorView(message: _error!, onRetry: _load);
     }
 
     final balance = _page?.summary.balance ?? 0;
-    final income = _page?.summary.totalIncome ?? 0;
-    final expense = _page?.summary.totalExpense ?? 0;
-    final reportIncome = _report?.summary.totalIncome ?? income;
-    final reportExpense = _report?.summary.totalExpense ?? expense;
-    final savedMonth = (reportIncome > reportExpense) ? (reportIncome - reportExpense) : 290.0;
+    final lastMonthIncome = _report?.summary.totalIncome ?? 0;
+    final lastMonthExpense = _report?.summary.totalExpense ?? 0;
+    final lastMonthSavings = lastMonthIncome - lastMonthExpense;
+
+    final String savingsText;
+    if (lastMonthSavings > 0) {
+      savingsText = 'เดือนที่แล้วคุณประหยัดได้ ${Formatters.money(lastMonthSavings)} >';
+    } else if (lastMonthExpense > 0) {
+      savingsText = 'เดือนที่แล้วคุณใช้จ่ายไป ${Formatters.money(lastMonthExpense)} >';
+    } else {
+      savingsText = 'ดูสรุปรายงานการเงินเดือนที่แล้ว >';
+    }
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -241,30 +267,23 @@ class _HomeScreenState extends State<HomeScreen> {
           AppConstants.pagePadding, 8, AppConstants.pagePadding, 24,
         ),
         children: [
-          // Top Bar: Menu Button, "My Account", Notification Bell
+          // ส่วนหัว: ปุ่มเมนู, "บัญชีของฉัน", ปุ่มแจ้งเตือน
           _TopHeaderBar(
             onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-            onNotificationTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No new notifications')),
-              );
-            },
+            onNotificationTap: () => _openNotificationsSheet(user),
+            unreadCount: _unreadNotificationCount,
           ),
-          const SizedBox(height: 12),
-
-          // Account Badge Tag (e.g. **** 3425)
-          const _AccountCardBadge(),
           const SizedBox(height: 16),
 
-          // Balance Display Header (Your Balance + $86,290.49 + Purple Savings Highlight Tag)
+          // ส่วนแสดงยอดเงินคงเหลือ (ยอดเงินคงเหลือ + ฿86,290.49 + ป้ายไฮไลท์ออมเงิน)
           _BalanceSection(
             balance: balance,
-            savedAmount: savedMonth,
+            savingsText: savingsText,
             onSavingsTap: _navigateToStatistics,
           ),
           const SizedBox(height: 24),
 
-          // Quick Action Row (4 Cards: Send, Request, Exchange, More)
+          // ปุ่มทางลัด 4 ปุ่ม: รายรับ, รายจ่าย, สถิติ, ประวัติ
           _QuickActionsRow(
             onSendTap: () => _openAdd('income'),
             onRequestTap: () => _openAdd('expense'),
@@ -273,19 +292,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 28),
 
-          // Transaction History Section
+          // ส่วนประวัติรายการ
           _SectionHeader(
-            title: 'Transaction History',
+            title: 'ประวัติรายการ',
             onViewAll: _navigateToTransactions,
           ),
           const SizedBox(height: 12),
           const Text(
-            'TODAY',
+            'วันนี้',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+              letterSpacing: 0.5,
               fontFamily: 'Inter',
             ),
           ),
@@ -301,9 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
           else if (_page == null || _page!.transactions.isEmpty)
             EmptyView(
               icon: Icons.receipt_long_outlined,
-              title: 'No transactions yet',
-              subtitle: 'Add your first income or expense to get started.',
-              actionLabel: 'Add Transaction',
+              title: 'ยังไม่มีรายการ',
+              subtitle: 'เพิ่มรายรับหรือรายจ่ายแรกของคุณเพื่อเริ่มต้น',
+              actionLabel: 'เพิ่มรายการ',
               onAction: _openAddSheet,
             )
           else
@@ -331,15 +350,17 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ============================================================================
-// TOP HEADER BAR: Circular Menu Button, "My Account" Title, Notification Bell
+// TOP HEADER BAR: ปุ่มเมนู, หัวข้อ "บัญชีของฉัน", ปุ่มแจ้งเตือน
 // ============================================================================
 class _TopHeaderBar extends StatelessWidget {
   final VoidCallback onMenuTap;
   final VoidCallback onNotificationTap;
+  final int unreadCount;
 
   const _TopHeaderBar({
     required this.onMenuTap,
     required this.onNotificationTap,
+    required this.unreadCount,
   });
 
   @override
@@ -347,7 +368,7 @@ class _TopHeaderBar extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Menu Button
+        // ปุ่มเมนู
         InkWell(
           onTap: onMenuTap,
           borderRadius: BorderRadius.circular(22),
@@ -365,9 +386,9 @@ class _TopHeaderBar extends StatelessWidget {
             ),
           ),
         ),
-        // Title
+        // หัวข้อหน้า
         const Text(
-          'My Account',
+          'บัญชีของฉัน',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -375,7 +396,7 @@ class _TopHeaderBar extends StatelessWidget {
             fontFamily: 'Inter',
           ),
         ),
-        // Notification Bell with Badge "2"
+        // ปุ่มแจ้งเตือนพร้อม Badge ตามจำนวนจริง
         InkWell(
           onTap: onNotificationTap,
           borderRadius: BorderRadius.circular(22),
@@ -396,30 +417,31 @@ class _TopHeaderBar extends StatelessWidget {
                     size: 22,
                   ),
                 ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(3.5),
-                    decoration: const BoxDecoration(
-                      color: AppColors.limeAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: const Text(
-                      '2',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
+                if (unreadCount > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(3.5),
+                      decoration: const BoxDecoration(
+                        color: AppColors.limeAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '$unreadCount',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -429,76 +451,32 @@ class _TopHeaderBar extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// ACCOUNT CARD BADGE: small pill centered with card icon & **** 3425 dropdown
-// ============================================================================
-class _AccountCardBadge extends StatelessWidget {
-  const _AccountCardBadge();
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.divider.withValues(alpha: 0.7)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 22,
-              height: 14,
-              decoration: BoxDecoration(
-                color: const Color(0xFFA3E635),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              '**** 3425',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary,
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ============================================================================
-// BALANCE SECTION: Your Balance, $86,290.49, Lavender Savings Highlight Pill
+// BALANCE SECTION: ยอดเงินคงเหลือ, ฿86,290.49, ป้ายไฮไลท์ออมเงินสีม่วง
 // ============================================================================
 class _BalanceSection extends StatelessWidget {
   final double balance;
-  final double savedAmount;
+  final String savingsText;
   final VoidCallback onSavingsTap;
 
   const _BalanceSection({
     required this.balance,
-    required this.savedAmount,
+    required this.savingsText,
     required this.onSavingsTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isPositive = balance >= 0;
+    final balanceColor = isPositive ? AppColors.income : AppColors.expenseRed;
+    final balancePrefix = isPositive ? '+' : '-';
+
     return Column(
       children: [
         const Text(
-          'Your Balance',
+          'ยอดเงินคงเหลือ',
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
@@ -508,9 +486,9 @@ class _BalanceSection extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          Formatters.money(balance),
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          '$balancePrefix${Formatters.money(balance.abs())}',
+          style: TextStyle(
+            color: balanceColor,
             fontSize: 34,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -519,7 +497,7 @@ class _BalanceSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // Lavender Highlight Tag: You saved $290 in last Month >
+        // ป้ายประหยัดเงินสีม่วง
         InkWell(
           onTap: onSavingsTap,
           borderRadius: BorderRadius.circular(20),
@@ -539,7 +517,7 @@ class _BalanceSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'You saved ${Formatters.money(savedAmount)} in last Month >',
+                  savingsText,
                   style: const TextStyle(
                     color: AppColors.purpleBadgeText,
                     fontSize: 12.5,
@@ -557,7 +535,7 @@ class _BalanceSection extends StatelessWidget {
 }
 
 // ============================================================================
-// QUICK ACTIONS ROW: 4 Equal Cards (Send [Lime], Request, Exchange, More)
+// QUICK ACTIONS ROW: 4 ปุ่มทางลัด (รายรับ, รายจ่าย, สถิติ, ประวัติ)
 // ============================================================================
 class _QuickActionsRow extends StatelessWidget {
   final VoidCallback onSendTap;
@@ -579,7 +557,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _ActionCard(
             icon: Icons.north_east_rounded,
-            label: 'Send',
+            label: 'รายรับ',
             backgroundColor: AppColors.limeAccent,
             iconColor: AppColors.textPrimary,
             onTap: onSendTap,
@@ -589,7 +567,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _ActionCard(
             icon: Icons.south_west_rounded,
-            label: 'Request',
+            label: 'รายจ่าย',
             backgroundColor: Colors.white,
             iconColor: AppColors.textPrimary,
             onTap: onRequestTap,
@@ -598,8 +576,8 @@ class _QuickActionsRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _ActionCard(
-            icon: Icons.swap_horiz_rounded,
-            label: 'Exchange',
+            icon: Icons.bar_chart_rounded,
+            label: 'สถิติ',
             backgroundColor: Colors.white,
             iconColor: AppColors.textPrimary,
             onTap: onExchangeTap,
@@ -608,8 +586,8 @@ class _QuickActionsRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _ActionCard(
-            icon: Icons.more_horiz_rounded,
-            label: 'More',
+            icon: Icons.receipt_long_rounded,
+            label: 'ประวัติ',
             backgroundColor: Colors.white,
             iconColor: AppColors.textPrimary,
             onTap: onMoreTap,
@@ -678,7 +656,7 @@ class _ActionCard extends StatelessWidget {
 }
 
 // ============================================================================
-// SECTION HEADER: Title & View all > link
+// SECTION HEADER: หัวข้อส่วน & ลิงก์ดูทั้งหมด >
 // ============================================================================
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -705,7 +683,7 @@ class _SectionHeader extends StatelessWidget {
           child: const Row(
             children: [
               Text(
-                'View all',
+                'ดูทั้งหมด',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
@@ -727,10 +705,8 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-
-
 // ============================================================================
-// BOTTOM NAVIGATION BAR: 5 items with center elevated lime green action button
+// BOTTOM NAVIGATION BAR: 5 เมนูภาษาไทย พร้อมปุ่มสีเขียวตรงกลาง
 // ============================================================================
 class _BottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -744,7 +720,6 @@ class _BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -756,58 +731,64 @@ class _BottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            selected: selectedIndex == 0,
-            onTap: () => onItemTapped(0),
-          ),
-          _NavItem(
-            icon: Icons.bar_chart_rounded,
-            label: 'Statistic',
-            selected: selectedIndex == 1,
-            onTap: () => onItemTapped(1),
-          ),
-          // Center Elevated Lime Green Action Button
-          GestureDetector(
-            onTap: () => onItemTapped(2),
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.limeAccent,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.limeAccent.withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home_rounded,
+                label: 'หน้าหลัก',
+                selected: selectedIndex == 0,
+                onTap: () => onItemTapped(0),
+              ),
+              _NavItem(
+                icon: Icons.bar_chart_rounded,
+                label: 'สถิติ',
+                selected: selectedIndex == 1,
+                onTap: () => onItemTapped(1),
+              ),
+              // ปุ่มตรงกลางสีเขียวสว่างสำหรับเพิ่มรายการ
+              GestureDetector(
+                onTap: () => onItemTapped(2),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.limeAccent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.limeAccent.withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.textPrimary,
+                    size: 28,
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.swap_vert_rounded,
-                color: AppColors.textPrimary,
-                size: 26,
+              _NavItem(
+                icon: Icons.receipt_long_rounded,
+                label: 'รายการ',
+                selected: selectedIndex == 3,
+                onTap: () => onItemTapped(3),
               ),
-            ),
+              _NavItem(
+                icon: Icons.person_outline_rounded,
+                label: 'โปรไฟล์',
+                selected: selectedIndex == 4,
+                onTap: () => onItemTapped(4),
+              ),
+            ],
           ),
-          _NavItem(
-            icon: Icons.credit_card_outlined,
-            label: 'Card',
-            selected: selectedIndex == 3,
-            onTap: () => onItemTapped(3),
-          ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            label: 'Profile',
-            selected: selectedIndex == 4,
-            onTap: () => onItemTapped(4),
-          ),
-        ],
+        ),
       ),
     );
   }

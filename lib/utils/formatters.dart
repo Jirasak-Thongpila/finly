@@ -48,21 +48,21 @@ class Validators {
 
   static String? email(String? value) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return 'Please enter your email';
+    if (v.isEmpty) return 'กรุณากรอกอีเมล';
     if (!_email.hasMatch(v)) return 'Please enter a valid email address';
     return null;
   }
 
   static String? required(String? value, {String field = 'This field'}) {
-    if ((value ?? '').trim().isEmpty) return '$field is required';
+    if ((value ?? '').trim().isEmpty) return 'กรุณากรอก $field ';
     return null;
   }
 
   static String? password(String? value, {bool confirm = false}) {
     final v = value ?? '';
-    final label = confirm ? 'Confirm password' : 'Password';
-    if (v.isEmpty) return '$label is required';
-    if (!confirm && v.length < 6) return 'Password must be at least 6 characters';
+    final label = confirm ? 'รหัสผ่านอีกครั้ง' : 'รหัสผ่าน';
+    if (v.isEmpty) return 'กรุณากรอก$label';
+    if (!confirm && v.length < 6) return 'กรุณากรอกให้ครบ 6 ตัวอักษร';
     return null;
   }
 

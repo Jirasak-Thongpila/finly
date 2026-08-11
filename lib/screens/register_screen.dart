@@ -75,17 +75,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Create account',
+                  'สร้างบัญชีใหม่',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 26,
+                    fontSize: 30,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Inter',
                   ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Start tracking your money in minutes.',
+                  'เริ่มติดตามการใช้จ่ายของคุณได้ภายในไม่กี่นาที',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
                 ),
                 const SizedBox(height: 28),
@@ -97,10 +97,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
-                          labelText: 'First Name',
+                          labelText: 'ชื่อ',
                           prefixIcon: Icon(Icons.person_outline_rounded),
                         ),
-                        validator: (v) => Validators.required(v, field: 'First name'),
+                        validator: (v) => Validators.required(v, field: 'ชื่อจริง'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -110,10 +110,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
-                          labelText: 'Last Name',
+                          labelText: 'นามสกุล',
                           prefixIcon: Icon(Icons.person_outline_rounded),
                         ),
-                        validator: (v) => Validators.required(v, field: 'Last name'),
+                        validator: (v) => Validators.required(v, field: 'นามสกุล'),
                       ),
                     ),
                   ],
@@ -125,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
                   decoration: const InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'อีเมล',
                     hintText: 'you@example.com',
                     prefixIcon: Icon(Icons.mail_outline_rounded),
                   ),
@@ -137,8 +137,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscure,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'At least 6 characters',
+                    labelText: 'รหัสผ่าน',
+                    hintText: 'อย่างน้อย 6 ตัวอักษร',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
                       icon: Icon(_obscure
@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _submit.isBusy ? null : _register(),
                   decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: 'ยืนยันรหัสผ่าน',
                     prefixIcon: Icon(Icons.lock_outline_rounded),
                   ),
                   validator: (v) {
@@ -174,32 +174,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submit.isBusy ? null : _register,
-                  child: _submit.isBusy
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text('Register'),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                    color: AppColors.gradientStart,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _submit.isBusy ? null : _register,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                      ),
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: _submit.isBusy
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Text('ลงทะเบียน'),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'Already have an account? ',
+                      'มีบัญชีอยู่แล้วใช่ไหม? ',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     GestureDetector(
                       onTap: () =>
                           Navigator.of(context).pushReplacementNamed('/login'),
                       child: const Text(
-                        'Login',
+                        'เข้าสู่ระบบ',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.primaryDark,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

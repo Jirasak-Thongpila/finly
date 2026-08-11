@@ -19,10 +19,9 @@ class TransactionCard extends StatelessWidget {
     final titleText = transaction.description.isNotEmpty
         ? transaction.description
         : transaction.category;
-    final initials = _getInitials(titleText, transaction.category);
-    final amountColor = isIncome ? AppColors.income : AppColors.textPrimary;
+    final amountColor = isIncome ? AppColors.income : AppColors.expenseRed;
     final amountPrefix = isIncome ? '+' : '-';
-    final typeLabel = isIncome ? 'Receive' : 'Transfer';
+    final typeLabel = isIncome ? 'รายรับ' : 'รายจ่าย';
 
     return Material(
       color: AppColors.card,
@@ -34,23 +33,21 @@ class TransactionCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // Circular Dark Avatar with White Initials or Category Icon
+              // Category Icon Container with soft pastel background
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF16251C), // Deep dark green/navy background
-                  shape: BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: isIncome
+                      ? const Color(0xFFDCFCE7) // Soft Green background
+                      : const Color(0xFFFEE2E2), // Soft Red background
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    fontFamily: 'Inter',
-                  ),
+                child: Icon(
+                  CategoryIcons.from(transaction.category),
+                  color: isIncome ? AppColors.income : AppColors.expenseRed,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: 14),
@@ -118,18 +115,7 @@ class TransactionCard extends StatelessWidget {
     );
   }
 
-  String _getInitials(String text, String category) {
-    final clean = text.trim();
-    if (clean.isEmpty) return category.isNotEmpty ? category[0].toUpperCase() : 'T';
-    final parts = clean.split(RegExp(r'\s+'));
-    if (parts.length >= 2 && parts[0].isNotEmpty && parts[1].isNotEmpty) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    if (clean.length >= 2) {
-      return clean.substring(0, 2).toUpperCase();
-    }
-    return clean[0].toUpperCase();
-  }
+
 
   String _formatSubtitle(Transaction t) {
     if (t.createdAt.isNotEmpty) {
