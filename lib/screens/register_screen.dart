@@ -177,9 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppConstants.radiusL),
-                    gradient: const LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.limeAccent],
-                    ),
+                    color: AppColors.gradientStart,
                   ),
                   child: ElevatedButton(
                     onPressed: _submit.isBusy ? null : _register,

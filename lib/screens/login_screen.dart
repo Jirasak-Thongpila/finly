@@ -120,9 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppConstants.radiusL),
-                    gradient: const LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.limeAccent],
-                    ),
+                    color: AppColors.gradientStart,
                   ),
                   child: ElevatedButton(
                     onPressed: _submit.isBusy ? null : _login,

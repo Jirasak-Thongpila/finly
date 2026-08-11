@@ -45,9 +45,7 @@ class WelcomeScreen extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppConstants.radiusL),
-                  gradient: const LinearGradient(
-                    colors: [AppColors.gradientStart, AppColors.limeAccent],
-                  ),
+                  color: AppColors.gradientStart,
                 ),
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pushNamed('/register'),
@@ -69,7 +67,7 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pushNamed('/login'),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(
-                    color: AppColors.primary,
+                    color: AppColors.gradientStart,
                     width: 1.8,
                   ),
                   shape: RoundedRectangleBorder(
@@ -96,9 +94,7 @@ class _Logo extends StatelessWidget {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.gradientStart, AppColors.limeAccent],
-            ),
+            color: AppColors.gradientStart,
             borderRadius: BorderRadius.circular(AppConstants.radiusL),
           ),
           child: const Icon(Icons.account_balance_wallet_rounded,
@@ -145,14 +141,7 @@ class _Coin extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.limeAccent.withValues(alpha: 0.85),
-              AppColors.primary.withValues(alpha: 0.95),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: AppColors.gradientStart,
           shape: BoxShape.circle,
           border: Border.all(
             color: AppColors.limeAccent.withValues(alpha: 0.45),
