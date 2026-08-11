@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
               _Illustration(),
               const SizedBox(height: 32),
               Text(
-                'Welcome to Finly',
+                'ยินดีต้อนรับสู่ Finly',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -32,8 +32,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Track your income and expenses, understand your'
-                'spending, and stay on top of your personal finances.', 
+                'ติดตามรายรับและรายจ่าย และบริหารจัดการการเงินส่วนตัวของคุณได้อย่างมีประสิทธิภาพ', 
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -59,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  child: const Text('Get Started'),
+                  child: const Text('ลงทะเบียน'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -75,7 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   minimumSize: const Size.fromHeight(52),
                 ),
-                child: const Text('Login'),
+                child: const Text('ลงชื่อเข้าใช้งาน'),
               ),
             ],
           ),

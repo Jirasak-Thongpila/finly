@@ -64,17 +64,17 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Welcome',
+                  'ยินดีต้อนรับ',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 26,
+                    fontSize: 30,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Inter',
                   ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Log in to manage your personal finances.',
+                  'เข้าสู่ระบบเพื่อจัดการการเงินส่วนบุคคลของคุณ',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
                 ),
                 const SizedBox(height: 28),
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
                   decoration: const InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'อีเมล',
                     hintText: 'you@example.com',
                     prefixIcon: Icon(Icons.mail_outline_rounded),
                   ),
@@ -97,8 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _submit.isBusy ? null : _login(),
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: 'รหัสผ่าน',
+                    hintText: 'ใส่รหัสผ่านของคุณ',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
                       icon: Icon(_obscure
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2.5),
                           )
-                        : const Text('Login'),
+                        : const Text('เข้าสู่ระบบ'),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have an account? ",
+                      "ยังไม่มีบัญชีใช่ไหม? ",
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     GestureDetector(
@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.of(context).pushReplacementNamed('/register');
                       },
                       child: const Text(
-                        'Register',
+                        'ลงทะเบียน',
                         style: TextStyle(
                           color: AppColors.primaryDark,
                           fontWeight: FontWeight.w700,
