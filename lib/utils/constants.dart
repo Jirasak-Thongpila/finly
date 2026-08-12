@@ -15,6 +15,8 @@ class AppConstants {
   static const String secureStorageKey = 'finly_jwt_token';
   static const String userCacheKey = 'finly_user';
 
+  static const String appVersion = '1.1.0';
+
   static const double radiusS = 12;
   static const double radiusM = 16;
   static const double radiusL = 20;
