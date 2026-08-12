@@ -25,30 +25,29 @@ void main() {
     await pumpApp(tester, session);
 
     expect(find.byType(WelcomeScreen), findsOneWidget);
-    expect(find.text('Manage Your Money'), findsOneWidget);
-    expect(find.text('Get Started'), findsOneWidget);
-    expect(find.text('Login'), findsOneWidget);
+    expect(find.text('ยินดีต้อนรับสู่ Finly'), findsOneWidget);
+    expect(find.text('ลงทะเบียน'), findsOneWidget);
+    expect(find.text('ลงชื่อเข้าใช้งาน'), findsOneWidget);
   });
 
   testWidgets('welcome screen navigates to login', (WidgetTester tester) async {
     final session = testSession();
     await pumpApp(tester, session);
 
-    await tester.tap(find.text('Login'));
+    await tester.tap(find.text('ลงชื่อเข้าใช้งาน'));
     await settleRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('ยินดีต้อนรับ'), findsOneWidget);
+    expect(find.text('รหัสผ่าน'), findsOneWidget);
   });
 
   testWidgets('welcome screen navigates to register', (WidgetTester tester) async {
     final session = testSession();
     await pumpApp(tester, session);
 
-    await tester.tap(find.text('Get Started'));
+    await tester.tap(find.text('ลงทะเบียน'));
     await settleRoute(tester);
 
-    expect(find.text('Create account'), findsOneWidget);
-    expect(find.text('Register'), findsWidgets);
+    expect(find.text('สร้างบัญชีใหม่'), findsOneWidget);
   });
 }

@@ -271,7 +271,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'เวอร์ชันแอปพลิเคชัน',
                   subtitle: 'Finly Personal Finance',
                   trailing: Text(
-                    'v1.0.0',
+                    'v${AppConstants.appVersion}',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,

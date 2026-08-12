@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/user.dart';
 import '../models/summary.dart';
+import '../models/transaction.dart';
 import '../services/api_client.dart';
 import '../services/session_manager.dart';
 import '../services/transaction_service.dart';
@@ -98,6 +99,73 @@ class _HomeScreenState extends State<HomeScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _delete(Transaction t) async {
+    final token = context.read<SessionManager>().token;
+    if (token == null) return;
+    try {
+      await TransactionService.delete(token: token, id: t.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ลบรายการเรียบร้อยแล้ว'),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.userMessage),
+          backgroundColor: AppColors.expenseRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _load();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการลบรายการ'),
+          backgroundColor: AppColors.expenseRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, Transaction t) async {
+    final title = t.description.isNotEmpty ? t.description : t.category;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'ยืนยันการลบรายการ?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text('คุณต้องการลบรายการ "$title" ใช่หรือไม่?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.expenseRed,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(88, 40),
+            ),
+            child: const Text('ลบรายการ'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   Future<void> _openAdd(String type) async {
@@ -366,19 +434,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 .map(
                   (t) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: TransactionCard(
-                      transaction: t,
-                      onTap: () => Navigator.of(context)
-                          .push(
-                            MaterialPageRoute(
-                              builder: (_) => t.isIncome
-                                  ? AddIncomeScreen(transaction: t)
-                                  : AddExpenseScreen(transaction: t),
+                    child: Dismissible(
+                      key: ValueKey(t.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'ลบรายการ',
+                              style: TextStyle(
+                                color: AppColors.expenseRed,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
                             ),
-                          )
-                          .then((changed) {
-                            if (changed == true && mounted) _load();
-                          }),
+                            SizedBox(width: 8),
+                            Icon(Icons.delete_outline_rounded, color: AppColors.expenseRed),
+                          ],
+                        ),
+                      ),
+                      confirmDismiss: (_) => _confirmDelete(context, t),
+                      onDismissed: (_) => _delete(t),
+                      child: TransactionCard(
+                        transaction: t,
+                        onTap: () => Navigator.of(context)
+                            .push(
+                              MaterialPageRoute(
+                                builder: (_) => t.isIncome
+                                    ? AddIncomeScreen(transaction: t)
+                                    : AddExpenseScreen(transaction: t),
+                              ),
+                            )
+                            .then((changed) {
+                              if (changed == true && mounted) _load();
+                            }),
+                      ),
                     ),
                   ),
                 ),

@@ -227,33 +227,46 @@ class _DrawerProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Tag Badge สี Lime Accent
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.limeAccent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.limeAccent.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.auto_awesome, color: AppColors.limeAccent, size: 13),
-                SizedBox(width: 6),
-                Text(
-                  'Finly Member',
-                  style: TextStyle(
-                    color: AppColors.limeAccent,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Inter',
-                    letterSpacing: 0.2,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.limeAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.limeAccent.withValues(alpha: 0.3),
+                    width: 1,
                   ),
                 ),
-              ],
-            ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, color: AppColors.limeAccent, size: 13),
+                    SizedBox(width: 6),
+                    Text(
+                      'Finly Member',
+                      style: TextStyle(
+                        color: AppColors.limeAccent,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Inter',
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/app_logo.png',
+                  width: 26,
+                  height: 26,
+                ),
+              ),
+            ],
           ),
         ],
       ),
