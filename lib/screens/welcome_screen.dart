@@ -90,14 +90,25 @@ class _Logo extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 64,
-          height: 64,
           decoration: BoxDecoration(
-            color: AppColors.gradientStart,
-            borderRadius: BorderRadius.circular(AppConstants.radiusL),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          child: const Icon(Icons.account_balance_wallet_rounded,
-              color: Colors.white, size: 32),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
       ],
     );

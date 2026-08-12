@@ -194,6 +194,78 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    if (!widget.isEdit || widget.existing == null) return;
+
+    final title = widget.existing!.description.isNotEmpty
+        ? widget.existing!.description
+        : widget.existing!.category;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'ยืนยันการลบรายการ?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text('คุณต้องการลบรายการ "$title" ใช่หรือไม่?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.expenseRed,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(88, 40),
+            ),
+            child: const Text('ลบรายการ'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _submit = const FormSubmit.loading());
+
+    final token = context.read<SessionManager>().token;
+    if (token == null) return;
+
+    try {
+      await TransactionService.delete(token: token, id: widget.existing!.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ลบรายการเรียบร้อยแล้ว'),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _submit = FormSubmit.failed(e.userMessage));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.userMessage),
+          backgroundColor: AppColors.expenseRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _submit = const FormSubmit.failed(
+          'เกิดข้อผิดพลาดในการลบรายการ',
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = widget.isEdit
@@ -236,9 +308,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
           centerTitle: true,
           actions: [
+            if (widget.isEdit)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFECDD3)),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppColors.expenseRed,
+                    size: 18,
+                  ),
+                ),
+                tooltip: 'ลบรายการ',
+                onPressed: _submit.isBusy ? null : _delete,
+              ),
             // Badge บอกประเภทรายการ (รายรับ vs รายจ่าย)
             Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(right: 16, left: 4),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -751,6 +841,43 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                   ),
                           ),
                         ),
+                        if (widget.isEdit) ...[
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: _submit.isBusy ? null : _delete,
+                            child: Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEE2E2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFFECDD3),
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.delete_outline_rounded,
+                                    size: 20,
+                                    color: AppColors.expenseRed,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'ลบรายการนี้',
+                                    style: TextStyle(
+                                      color: AppColors.expenseRed,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

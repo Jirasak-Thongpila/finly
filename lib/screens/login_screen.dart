@@ -63,6 +63,30 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.asset(
+                        'assets/images/app_logo.png',
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
                 const Text(
                   'ยินดีต้อนรับ',
                   style: TextStyle(
@@ -77,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'เข้าสู่ระบบเพื่อจัดการการเงินส่วนบุคคลของคุณ',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
